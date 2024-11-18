@@ -1,8 +1,9 @@
 """
- * This Software is under the MIT License
- * Refer to LICENSE or https://opensource.org/licenses/MIT for more information
- * Written by ©Kohulan Rajan 2020
+* This Software is under the MIT License
+* Refer to LICENSE or https://opensource.org/licenses/MIT for more information
+* Written by ©Kohulan Rajan 2020
 """
+
 import os
 import requests
 import cv2
@@ -81,7 +82,7 @@ def segment_chemical_structures(
     image: np.array,
     expand: bool = True,
     visualization: bool = False,
-) -> List[np.array]:
+) -> Tuple[np.array, List[Tuple[int, int, int, int]]]:
     """
     This function runs the segmentation model as well as the mask expansion
     -> returns a List of segmented chemical structure depictions (np.array)
@@ -115,15 +116,18 @@ def segment_chemical_structures(
     if len(segments) > 0:
         segments, bboxes = sort_segments_bboxes(segments, bboxes)
 
-    segments = [segment for segment in segments
-                if segment.shape[0] > 0
-                if segment.shape[1] > 0]
+    non_empty_segments = []
+    non_empty_bboxes = []
+    for segment, bbox in zip(segments, bboxes):
+        if segment.shape[0] > 0 and segment.shape[1] > 0:
+            non_empty_segments.append(segment)
+            non_empty_bboxes.append(bbox)
 
-    return segments
+    return non_empty_segments, non_empty_bboxes
 
 
 def determine_depiction_size_with_buffer(
-    bboxes: List[Tuple[int, int, int, int]]
+    bboxes: List[Tuple[int, int, int, int]],
 ) -> Tuple[int, int]:
     """
     This function takes a list of bounding boxes and returns 1.1 * the maximal
@@ -205,7 +209,9 @@ def load_model() -> modellib.MaskRCNN:
     # Download trained weights if needed
     if not os.path.exists(model_path):
         print("Downloading model weights...")
-        url = "https://zenodo.org/record/10663579/files/mask_rcnn_molecule.h5?download=1"
+        url = (
+            "https://zenodo.org/record/10663579/files/mask_rcnn_molecule.h5?download=1"
+        )
         req = requests.get(url, allow_redirects=True)
         with open(model_path, "wb") as model_file:
             model_file.write(req.content)
@@ -237,10 +243,7 @@ def get_expanded_masks(image: np.array) -> np.array:
     size = determine_depiction_size_with_buffer(bboxes)
     # Mask expansion
     expanded_masks = complete_structure_mask(
-        image_array=image,
-        mask_array=masks,
-        max_depiction_size=size,
-        debug=False
+        image_array=image, mask_array=masks, max_depiction_size=size, debug=False
     )
     return expanded_masks
 
