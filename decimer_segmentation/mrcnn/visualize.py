@@ -18,7 +18,6 @@ from skimage.measure import find_contours
 import matplotlib.pyplot as plt
 from matplotlib import patches, lines
 from matplotlib.patches import Polygon
-import IPython.display
 
 
 # Import Mask RCNN
@@ -30,9 +29,7 @@ from . import utils
 ############################################################
 
 
-def display_images(
-    images, titles=None, cols=4, cmap=None, norm=None, interpolation=None
-):
+def display_images(images, titles=None, cols=4, cmap=None, norm=None, interpolation=None):
     """Display the given set of images, optionally with titles.
     images: list or array of image tensors in HWC format.
     titles: optional. A list of titles to display with each image.
@@ -49,9 +46,7 @@ def display_images(
         plt.subplot(rows, cols, i)
         plt.title(title, fontsize=9)
         plt.axis("off")
-        plt.imshow(
-            image.astype(np.uint8), cmap=cmap, norm=norm, interpolation=interpolation
-        )
+        plt.imshow(image.astype(np.uint8), cmap=cmap, norm=norm, interpolation=interpolation)
         i += 1
     plt.show()
 
@@ -223,18 +218,12 @@ def display_differences(
     captions = ["" for m in gt_match] + [
         "{:.2f} / {:.2f}".format(
             pred_score[i],
-            (
-                overlaps[i, int(pred_match[i])]
-                if pred_match[i] > -1
-                else overlaps[i].max()
-            ),
+            (overlaps[i, int(pred_match[i])] if pred_match[i] > -1 else overlaps[i].max()),
         )
         for i in range(len(pred_match))
     ]
     # Set title if not provided
-    title = (
-        title or "Ground Truth and Detections\n GT=green, pred=red, captions: score/IoU"
-    )
+    title = title or "Ground Truth and Detections\n GT=green, pred=red, captions: score/IoU"
     # Display
     display_instances(
         image,
@@ -324,11 +313,7 @@ def draw_rois(image, rois, refined_rois, mask, class_ids, class_names, limit=10)
     # Print stats
     print("Positive ROIs: ", class_ids[class_ids > 0].shape[0])
     print("Negative ROIs: ", class_ids[class_ids == 0].shape[0])
-    print(
-        "Positive Ratio: {:.2f}".format(
-            class_ids[class_ids > 0].shape[0] / class_ids.shape[0]
-        )
-    )
+    print("Positive Ratio: {:.2f}".format(class_ids[class_ids > 0].shape[0] / class_ids.shape[0]))
 
 
 # TODO: Replace with matplotlib equivalent?
@@ -352,16 +337,8 @@ def display_top_masks(image, mask, class_ids, class_names, limit=4):
     titles.append("H x W={}x{}".format(image.shape[0], image.shape[1]))
     # Pick top prominent classes in this image
     unique_class_ids = np.unique(class_ids)
-    mask_area = [
-        np.sum(mask[:, :, np.where(class_ids == i)[0]]) for i in unique_class_ids
-    ]
-    top_ids = [
-        v[0]
-        for v in sorted(
-            zip(unique_class_ids, mask_area), key=lambda r: r[1], reverse=True
-        )
-        if v[1] > 0
-    ]
+    mask_area = [np.sum(mask[:, :, np.where(class_ids == i)[0]]) for i in unique_class_ids]
+    top_ids = [v[0] for v in sorted(zip(unique_class_ids, mask_area), key=lambda r: r[1], reverse=True) if v[1] > 0]
     # Generate images and titles
     for i in range(limit):
         class_id = top_ids[i] if i < len(top_ids) else -1
@@ -388,9 +365,7 @@ def plot_precision_recall(AP, precisions, recalls):
     _ = ax.plot(recalls, precisions)
 
 
-def plot_overlaps(
-    gt_class_ids, pred_class_ids, pred_scores, overlaps, class_names, threshold=0.5
-):
+def plot_overlaps(gt_class_ids, pred_class_ids, pred_scores, overlaps, class_names, threshold=0.5):
     """Draw a grid showing how ground truth objects are classified.
     gt_class_ids: [N] int. Ground truth class IDs
     pred_class_id: [N] int. Predicted class IDs
@@ -406,10 +381,7 @@ def plot_overlaps(
     plt.imshow(overlaps, interpolation="nearest", cmap=plt.cm.Blues)
     plt.yticks(
         np.arange(len(pred_class_ids)),
-        [
-            "{} ({:.2f})".format(class_names[int(id)], pred_scores[i])
-            for i, id in enumerate(pred_class_ids)
-        ],
+        ["{} ({:.2f})".format(class_names[int(id)], pred_scores[i]) for i, id in enumerate(pred_class_ids)],
     )
     plt.xticks(
         np.arange(len(gt_class_ids)),
@@ -422,13 +394,7 @@ def plot_overlaps(
         text = ""
         if overlaps[i, j] > threshold:
             text = "match" if gt_class_ids[j] == pred_class_ids[i] else "wrong"
-        color = (
-            "white"
-            if overlaps[i, j] > thresh
-            else "black"
-            if overlaps[i, j] > 0
-            else "grey"
-        )
+        color = "white" if overlaps[i, j] > thresh else "black" if overlaps[i, j] > 0 else "grey"
         plt.text(
             j,
             i,
@@ -560,9 +526,7 @@ def draw_boxes(
             masked_image = apply_mask(masked_image, mask, color)
             # Mask Polygon
             # Pad to ensure proper polygons for masks that touch image edges.
-            padded_mask = np.zeros(
-                (mask.shape[0] + 2, mask.shape[1] + 2), dtype=np.uint8
-            )
+            padded_mask = np.zeros((mask.shape[0] + 2, mask.shape[1] + 2), dtype=np.uint8)
             padded_mask[1:-1, 1:-1] = mask
             contours = find_contours(padded_mask, 0.5)
             for verts in contours:
@@ -571,49 +535,3 @@ def draw_boxes(
                 p = Polygon(verts, facecolor="none", edgecolor=color)
                 ax.add_patch(p)
     ax.imshow(masked_image.astype(np.uint8))
-
-
-def display_table(table):
-    """Display values in a table format.
-    table: an iterable of rows, and each row is an iterable of values.
-    """
-    html = ""
-    for row in table:
-        row_html = ""
-        for col in row:
-            row_html += "<td>{:40}</td>".format(str(col))
-        html += "<tr>" + row_html + "</tr>"
-    html = "<table>" + html + "</table>"
-    IPython.display.display(IPython.display.HTML(html))
-
-
-def display_weight_stats(model):
-    """Scans all the weights in the model and returns a list of tuples
-    that contain stats about each weight.
-    """
-    layers = model.get_trainable_layers()
-    table = [["WEIGHT NAME", "SHAPE", "MIN", "MAX", "STD"]]
-    for layer_ in layers:
-        weight_values = layer_.get_weights()  # list of Numpy arrays
-        weight_tensors = layer_.weights  # list of TF tensors
-        for i, w in enumerate(weight_values):
-            weight_name = weight_tensors[i].name
-            # Detect problematic layers. Exclude biases of conv layers.
-            alert = ""
-            if w.min() == w.max() and not (
-                layer_.__class__.__name__ == "Conv2D" and i == 1
-            ):
-                alert += "<span style='color:red'>*** dead?</span>"
-            if np.abs(w.min()) > 1000 or np.abs(w.max()) > 1000:
-                alert += "<span style='color:red'>*** Overflow?</span>"
-            # Add row
-            table.append(
-                [
-                    weight_name + alert,
-                    str(w.shape),
-                    "{:+9.4f}".format(w.min()),
-                    "{:+10.4f}".format(w.max()),
-                    "{:+9.4f}".format(w.std()),
-                ]
-            )
-    display_table(table)

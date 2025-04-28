@@ -3,9 +3,7 @@
 import setuptools
 import platform
 
-if (
-    platform.processor() == "arm" or platform.processor() == "i386"
-) and platform.system() == "Darwin":
+if (platform.processor() == "arm" or platform.processor() == "i386") and platform.system() == "Darwin":
     tensorflow_os = ["tensorflow-macos>=2.10.0"]
 else:
     tensorflow_os = ["tensorflow>=2.12.0"]
@@ -34,7 +32,6 @@ setuptools.setup(
         "pillow",
         "opencv-python",
         "matplotlib",
-        "IPython",
         "pdf2image",
         "scipy",
     ],
